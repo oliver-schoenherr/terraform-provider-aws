@@ -233,16 +233,14 @@ func resourceAwsEcsService() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"security_groups": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Optional: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
-							Set:      schema.HashString,
 						},
 						"subnets": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Required: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
-							Set:      schema.HashString,
 						},
 						"assign_public_ip": {
 							Type:     schema.TypeBool,
@@ -731,8 +729,8 @@ func flattenEcsNetworkConfiguration(nc *ecs.NetworkConfiguration) []interface{} 
 	}
 
 	result := make(map[string]interface{})
-	result["security_groups"] = flattenStringSet(nc.AwsvpcConfiguration.SecurityGroups)
-	result["subnets"] = flattenStringSet(nc.AwsvpcConfiguration.Subnets)
+	result["security_groups"] = flattenStringList(nc.AwsvpcConfiguration.SecurityGroups)
+	result["subnets"] = flattenStringList(nc.AwsvpcConfiguration.Subnets)
 
 	if nc.AwsvpcConfiguration.AssignPublicIp != nil {
 		result["assign_public_ip"] = *nc.AwsvpcConfiguration.AssignPublicIp == ecs.AssignPublicIpEnabled
@@ -748,9 +746,9 @@ func expandEcsNetworkConfiguration(nc []interface{}) *ecs.NetworkConfiguration {
 	awsVpcConfig := &ecs.AwsVpcConfiguration{}
 	raw := nc[0].(map[string]interface{})
 	if val, ok := raw["security_groups"]; ok {
-		awsVpcConfig.SecurityGroups = expandStringSet(val.(*schema.Set))
+		awsVpcConfig.SecurityGroups = expandStringList(val.([]interface{}))
 	}
-	awsVpcConfig.Subnets = expandStringSet(raw["subnets"].(*schema.Set))
+	awsVpcConfig.Subnets = expandStringList(raw["subnets"].([]interface{}))
 	if val, ok := raw["assign_public_ip"].(bool); ok {
 		awsVpcConfig.AssignPublicIp = aws.String(ecs.AssignPublicIpDisabled)
 		if val {
